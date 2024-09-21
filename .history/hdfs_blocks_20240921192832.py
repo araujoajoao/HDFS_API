@@ -4,8 +4,6 @@ import time
 from datetime import datetime, timedelta
 import requests
 from airflow import DAG
-from airflow.operators.python import PythonOperator
-from airflow.operators.empty import EmptyOperator
 # from airflow.models import Variable
 
 
