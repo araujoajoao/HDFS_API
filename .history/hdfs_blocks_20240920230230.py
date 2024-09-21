@@ -4,7 +4,7 @@ import time
 from datetime import datetime, timedelta
 import requests
 from airflow import DAG
-# from airflow.models import Variable
+from airflow.models import Variable
 from airflow.operators.python import PythonOperator
 from airflow.operators.empty import EmptyOperator
 
@@ -14,7 +14,7 @@ sys.path.append(os.path.dirname(__file__))
 namenode_host = "https://{cm-host}/{cluster-name}/{namespace}/"  # Cluster name and namespace
 api_user = {"username"}
 api_password = {"password"}
-# credentials = Variable.get({airflow-variable})  # Airflow variable
+# credemntials = Variable.get({airflow-variable})  # Airflow variable
 
 default_args = {
     "depends_on_past": False,
