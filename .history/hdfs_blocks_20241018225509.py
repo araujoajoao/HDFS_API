@@ -194,4 +194,4 @@ with DAG(
 
     # Task dependencies
     check_hour >> upscale_group >> task_sensor
-    task_sensor >> get_hdfs_data >> downscale_group >> task_default
+    ifrs9_sensor >> get_hdfs_data >> downscale_group >> task_default

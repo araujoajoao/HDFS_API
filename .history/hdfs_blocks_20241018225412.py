@@ -149,15 +149,15 @@ with DAG(
             ssh_conn_id="test-ssh",
             command=(
                 "cdp datahub scale-cluster --cluster-name cluster_name "
-                "--instance-group-name vm_type--instance-group-desired-count 33"
+                "--instance-group-name worker --instance-group-desired-count 33"
             ),
         )
 
     # External task sensor for IFRS9_90_DIAS before downscaling
-    task_sensor = ExternalTaskSensor(
-        task_id="task_name",
-        external_dag_id="dag_id",
-        external_task_id="task_id",
+    ifrs9_sensor = ExternalTaskSensor(
+        task_id="ifrs9_sensor",
+        external_dag_id="IFRS9_90_DIAS",
+        external_task_id="t_regra_de_controle",
         allowed_states=["success"],
         mode="poke",
         timeout=1800,
@@ -193,5 +193,5 @@ with DAG(
     task_default = EmptyOperator(task_id="downscale_success")
 
     # Task dependencies
-    check_hour >> upscale_group >> task_sensor
-    task_sensor >> get_hdfs_data >> downscale_group >> task_default
+    check_hour >> upscale_group >> ifrs9_sensor
+    ifrs9_sensor >> get_hdfs_data >> downscale_group >> task_default
