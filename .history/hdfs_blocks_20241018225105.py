@@ -148,16 +148,15 @@ with DAG(
             task_id="upscale_30_nodes",
             ssh_conn_id="test-ssh",
             command=(
-                "cdp datahub scale-cluster --cluster-name cluster_name "
-                "--instance-group-name vm_type--instance-group-desired-count 33"
+                "cluster command"
             ),
         )
 
     # External task sensor for IFRS9_90_DIAS before downscaling
     task_sensor = ExternalTaskSensor(
-        task_id="task_name",
-        external_dag_id="dag_id",
-        external_task_id="task_id",
+        task_id="task_id",
+        external_dag_id="DAG_id,
+        external_task_id="t_regra_de_controle",
         allowed_states=["success"],
         mode="poke",
         timeout=1800,
@@ -177,8 +176,8 @@ with DAG(
                 task_id=f"downscale_{nodes}_nodes",
                 ssh_conn_id="test-ssh",
                 command=(
-                    "cdp datahub scale-cluster --cluster-name cluster_name "
-                    f"--instance-group-name vm_type --instance-group-desired-count {nodes}"
+                    "cdp datahub scale-cluster --cluster-name di-pnb-test-spark3 "
+                    f"--instance-group-name worker --instance-group-desired-count {nodes}"
                 ),
             )
             check_task = PythonOperator(
@@ -193,5 +192,5 @@ with DAG(
     task_default = EmptyOperator(task_id="downscale_success")
 
     # Task dependencies
-    check_hour >> upscale_group >> task_sensor
-    task_sensor >> get_hdfs_data >> downscale_group >> task_default
+    check_hour >> upscale_group >> ifrs9_sensor
+    ifrs9_sensor >> get_hdfs_data >> downscale_group >> task_default

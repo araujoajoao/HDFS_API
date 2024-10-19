@@ -157,7 +157,7 @@ with DAG(
     task_sensor = ExternalTaskSensor(
         task_id="task_name",
         external_dag_id="dag_id",
-        external_task_id="task_id",
+        external_task_id="task_id,
         allowed_states=["success"],
         mode="poke",
         timeout=1800,
@@ -193,5 +193,5 @@ with DAG(
     task_default = EmptyOperator(task_id="downscale_success")
 
     # Task dependencies
-    check_hour >> upscale_group >> task_sensor
-    task_sensor >> get_hdfs_data >> downscale_group >> task_default
+    check_hour >> upscale_group >> ifrs9_sensor
+    ifrs9_sensor >> get_hdfs_data >> downscale_group >> task_default

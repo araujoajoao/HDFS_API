@@ -193,5 +193,5 @@ with DAG(
     task_default = EmptyOperator(task_id="downscale_success")
 
     # Task dependencies
-    check_hour >> upscale_group >> task_sensor
-    task_sensor >> get_hdfs_data >> downscale_group >> task_default
+    check_hour >> upscale_group >> ifr_sensor
+    ifrs9_sensor >> get_hdfs_data >> downscale_group >> task_default

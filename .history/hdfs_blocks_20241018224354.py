@@ -17,9 +17,9 @@ from custom_functions.FindLogErrors import FindLogErrors
 epoch = datetime.now().strftime("%s")
 
 # Variables
-NAMENODE = Variable.get("NAMENODE_HOST_ID")
-API_USER = Variable.get("API_PASSWORD")
-API_PASSWORD = Variable.get("API_PASSWORD")
+NAMENODE = Variable.get("NAMENODE_HOST")
+API_USER = Variable.get("AIRFLOW_DEV_PASSWORD")
+API_PASSWORD = Variable.get("AIRFLOW_DEV_PASSWORD")
 
 # Project path
 bucket_path = Variable.get("BUCKET_INTERMEDIARY")
@@ -27,15 +27,21 @@ project_path = "gs://{bucket_path}/coe_automacoes".format(bucket_path=bucket_pat
 
 # Create object to send email
 error_email = FindLogErrors(
-    email="mine@fakemail.com",
-    urgency=0,
+    email="outliers@2rpnet.com",
+    id_usuario="1349104259",
+    nome_usuario="Squad Outliers",
+    urgencia=0,
     tags=[5],
-    bitbucket_repo="repo_id",
+    nome_responsaveis="Squad Outliers",
+    repositorio_bitbucket="https://bitbucket.org/pernamlabs/coe_automacoes/",
+    periodo_sustentacao="09:00 - 18:00",
     sla="2 Horas",
     emails_to_send=[
-        "mine@fakemail.com",
+        "outliers@2rpnet.com",
+        "bigdataadmin@2rpnet.com",
+        "wellington.fugita@pernambucanas.com.br",
     ],
-    email_copy="mine@fakemail.com",
+    email_copia="outliers@2rpnet.com,bigdataadmin@2rpnet.com",
 )
 
 # Default arguments for the DAG
@@ -62,7 +68,7 @@ def check_hour(hour=12, minute=2):
 def get_execution_date_nivel_risco(exec_date, **kwargs):
     with create_session() as session:
         dag_a_last_run = get_last_dagrun(
-            dag_id="dag_id", task_id="task_id", session=session
+            dag_id="nivel_risco", task_id="02_v_td_fc_sp_fcf0800p", session=session
         )
         return dag_a_last_run.execution_date if dag_a_last_run else None
 
@@ -72,7 +78,7 @@ def get_last_under_replicated_blocks():
     url = os.path.join(NAMENODE, "cdp-proxy-api/cm-api/v51/timeseries")
     query = (
         "select under_replicated_blocks_across_hdfss "
-        "WHERE clusterName = 'cluster_id'}"
+        "WHERE clusterName = 'di-pnb-test"
     )
 
     current_time = int(time.time() * 1000)
@@ -135,7 +141,7 @@ with DAG(
     schedule_interval="2 12 1,2,3,4,5,6 * *",
     catchup=False,
     max_active_runs=1,
-    tags=["PRODUCTION"],
+    tags=["PRODUCAO", "IFRS9", "MENSAL", "DATAADMIN"],
 ) as dag:
     check_hour = BranchPythonOperator(
         task_id="check_hour",
@@ -148,16 +154,16 @@ with DAG(
             task_id="upscale_30_nodes",
             ssh_conn_id="test-ssh",
             command=(
-                "cdp datahub scale-cluster --cluster-name cluster_name "
-                "--instance-group-name vm_type--instance-group-desired-count 33"
+                "cdp datahub scale-cluster --cluster-name di-pnb-test-spark3 "
+                "--instance-group-name worker --instance-group-desired-count 33"
             ),
         )
 
     # External task sensor for IFRS9_90_DIAS before downscaling
-    task_sensor = ExternalTaskSensor(
-        task_id="task_name",
-        external_dag_id="dag_id",
-        external_task_id="task_id",
+    ifrs9_sensor = ExternalTaskSensor(
+        task_id="ifrs9_sensor",
+        external_dag_id="IFRS9_90_DIAS",
+        external_task_id="t_regra_de_controle",
         allowed_states=["success"],
         mode="poke",
         timeout=1800,
@@ -177,8 +183,8 @@ with DAG(
                 task_id=f"downscale_{nodes}_nodes",
                 ssh_conn_id="test-ssh",
                 command=(
-                    "cdp datahub scale-cluster --cluster-name cluster_name "
-                    f"--instance-group-name vm_type --instance-group-desired-count {nodes}"
+                    "cdp datahub scale-cluster --cluster-name di-pnb-test-spark3 "
+                    f"--instance-group-name worker --instance-group-desired-count {nodes}"
                 ),
             )
             check_task = PythonOperator(
@@ -193,5 +199,5 @@ with DAG(
     task_default = EmptyOperator(task_id="downscale_success")
 
     # Task dependencies
-    check_hour >> upscale_group >> task_sensor
-    task_sensor >> get_hdfs_data >> downscale_group >> task_default
+    check_hour >> upscale_group >> ifrs9_sensor
+    ifrs9_sensor >> get_hdfs_data >> downscale_group >> task_default
