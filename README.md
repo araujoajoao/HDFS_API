@@ -2,14 +2,15 @@
 
 This project defines an Apache Airflow DAG for monitoring and managing under-replicated HDFS blocks within a cluster environment. The DAG utilizes a mix of custom Python and Airflow operators to control the scale of the cluster based on the availability of under-replicated blocks.
 
-# DAG Flow
+DAG Flow
 Hourly Check: Triggers an hourly task to decide the appropriate action.
 Cluster Scaling:
 If under-replicated blocks are present, the DAG attempts a series of scaling operations, initially upscaling the cluster.
 Once the replication goal is met, it downscales the cluster step-by-step, checking under-replicated blocks at each step.
 Task Monitoring: An external task sensor monitors the successful completion of a related DAG before proceeding to downscale tasks.
 
-#Prerequisites
+Prerequisites
+
 Apache Airflow with dependencies on SSHOperator and ExternalTaskSensor.
 Cloudera Manager API access for retrieving HDFS block replication details.
 SSH Access to the cluster for executing scaling commands.
@@ -19,13 +20,18 @@ API_USER: Username for Cloudera API.
 API_PASSWORD: Password for Cloudera API.
 BUCKET_INTERMEDIARY: Path to intermediary storage for automation files.
 
-# Project Configuration
+Project Configuration
+
 The following global variables and default arguments are defined in the DAG:
 
-NAMENODE: Retrieved from the NAMENODE_HOST_ID Airflow variable.
+NAMENODE: Retrieved from the NAMENODE_HOST_ID Airflow variable. 
+
 API_USER & API_PASSWORD: Retrieved from Airflow variables for authentication.
+
 error_email: An instance of FindLogErrors for handling error notifications.
+
 Default Arguments: Specifies retry behavior, failure callback, and task dependencies for production execution.
+
 DAG Details
 Primary Functions
 check_hour(): Branching function that checks the time and routes the workflow accordingly.
