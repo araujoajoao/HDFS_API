@@ -163,9 +163,14 @@ with DAG(
         timeout=1800,
     )
 
-    get_hdfs_data = PythonOperator(
+    t_hdfs_data = PythonOperator(
         task_id="get_hdfs_blocks",
         python_callable=get_last_under_replicated_blocks,
+    )
+
+    t_health_check = PythonOperator(
+        task_id="get_health_check",
+        python_callable=get_health_check,
     )
 
     # TaskGroup for downscaling cluster with HDFS checks between
@@ -181,17 +186,13 @@ with DAG(
                     f"--instance-group-name vm_type --instance-group-desired-count {nodes}"
                 ),
             )
-            check_task = PythonOperator(
-                task_id=f"check_blocks_{nodes}",
-                python_callable=get_last_under_replicated_blocks,
-            )
             if previous_check_task is not None:
                 previous_check_task >> downscale_task
-            downscale_task >> check_task
-            previous_check_task = check_task
+            downscale_task >> t_check_blocks >> t_health_check
+            previous_check_task = t_health_check
 
-    task_default = EmptyOperator(task_id="downscale_success")
+    t_default = EmptyOperator(task_id="downscale_success")
 
     # Task dependencies
-    check_hour >> upscale_group >> task_sensor
-    task_sensor >> get_hdfs_data >> downscale_group >> task_default
+    t_check_hour >> upscale_group >> task_sensor
+    task_sensor >> t_hdfs_data >> downscale_group >> t_default
